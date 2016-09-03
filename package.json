@@ -1,0 +1,31 @@
+{
+  "name": "babel-plugin-with",
+  "version": "0.0.0",
+  "description": "Convert \"with\" statements to strict mode-compatible JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "prepublish": "babel -d lib src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pugjs/babel-plugin-with.git"
+  },
+  "keywords": [
+    "babel",
+    "with"
+  ],
+  "author": "Timothy Gu <timothygu99@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pugjs/babel-plugin-with/issues"
+  },
+  "homepage": "https://github.com/pugjs/babel-plugin-with#readme",
+  "dependencies": {
+    "babel-plugin-transform-es2015-arrow-functions": "^6.8.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-preset-es2015": "^6.14.0"
+  }
+}
