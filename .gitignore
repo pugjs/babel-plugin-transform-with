@@ -8,6 +8,8 @@ lib-cov
 *.pid
 *.gz
 
+test/**/actual.js
+
 pids
 logs
 results
