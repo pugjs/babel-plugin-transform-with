@@ -24,11 +24,17 @@ for (let category of readdir(join(__dirname, 'fixtures'))) {
 
     for (let test of readdir(catDir).filter(t => stat(join(catDir, t)).isDirectory())) {
       testit(test, () => {
-        let expected = read(join(catDir, test, 'expected.js'), 'utf8').trim();
         let input = read(join(catDir, test, 'input.js'), 'utf8').trim();
         let actual = transform(input, opts).code.trim();
         write(join(catDir, test, 'actual.js'), actual + '\n');
-        // write(join(catDir, test, 'expected.js'), actual + '\n');
+
+        let expected;
+        try {
+          expected = read(join(catDir, test, 'expected.js'), 'utf8').trim();
+        } catch (err) {
+          write(join(catDir, test, 'expected.js'), actual + '\n');
+          expected = actual;
+        }
         assert.equal(actual, expected);
       });
     }

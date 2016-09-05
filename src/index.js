@@ -1,4 +1,8 @@
+import hasBindingUnderPath from './binding-under-path.js';
+
 export default function ({template, traverse, types: t}) {
+  const annotationRegex = /^@with(?:\s+exclude\s*:\s*(.+)|$)/;
+
   const buildParamDef = template(`
     STRING in REF ?
       REF.NAME :
@@ -7,42 +11,33 @@ export default function ({template, traverse, types: t}) {
         undefined
   `);
 
-  let buildRetCheck = template(`
+  const buildRetCheck = template(`
     if (typeof RETURN === "object") return RETURN.v;
   `);
 
   const loopLabelVisitor = {
     LabeledStatement({node}, state) {
-      state.innerLabels.push(node.label.name);
+      state.innerLabels.add(node.label.name);
     }
   };
 
   const globalsVisitor = {
-    AssignmentExpression(path, {globals, builtin}) {
+    AssignmentExpression(path, {globals, rootPath}) {
       for (let name in path.getBindingIdentifiers()) {
-        if (!path.scope.hasBinding(name, !builtin)) {
+        if (!hasBindingUnderPath(path, rootPath, name)) {
           globals[name] = true;
         }
       }
     },
 
-    ReferencedIdentifier({node, scope}, {globals, builtin}) {
-      if (!scope.hasBinding(node.name, !builtin)) {
-        globals[node.name] = true;
+    ReferencedIdentifier(path, {globals, rootPath}) {
+      if (!path.parentPath.isBreakStatement() && !path.parentPath.isContinueStatement()) {
+        if (!hasBindingUnderPath(path, rootPath, path.node.name)) {
+          globals[path.node.name] = true;
+        }
       }
     }
   };
-
-  function getGlobals(path, builtin) {
-    const state = {
-      globals: {},
-      builtin
-    };
-    // path.traverse doesn't actually traverse the path.node itself
-    // for some reason
-    path.scope.traverse(path.node, globalsVisitor, state);
-    return state.globals;
-  }
 
   function loopNodeTo(node) {
     if (t.isBreakStatement(node)) {
@@ -83,7 +78,7 @@ export default function ({template, traverse, types: t}) {
       if (loopText) {
         if (node.label) {
           // we shouldn't be transforming this because it exists somewhere inside
-          if (state.innerLabels.indexOf(node.label.name) >= 0) {
+          if (state.innerLabels.has(node.label.name)) {
             return;
           }
 
@@ -144,18 +139,8 @@ export default function ({template, traverse, types: t}) {
 
         function checkComment() {
           if (node.leadingComments && node.leadingComments.length) {
-            let comment = node.leadingComments.pop();
-            if (comment.value.trim() !== '@with') {
-              node.leadingComments.push(comment);
-              return false;
-            }
-
-            let prev = path.getSibling(path.key - 1);
-            if (prev.node && prev.node.trailingComments && prev.node.trailingComments.length) {
-              prev.node.trailingComments.pop();
-            }
-
-            return true;
+            const comment = node.leadingComments.slice(-1)[0];
+            return annotationRegex.test(comment.value.trim());
           }
           return false;
         }
@@ -163,7 +148,7 @@ export default function ({template, traverse, types: t}) {
         function getExpression() {
           const objPath = path.get('body.0');
           if (!objPath || !objPath.isExpressionStatement()) {
-            (objPath || path).buildCodeFrameError('A @with block must have an expression as its first statement.');
+            throw (objPath || path).buildCodeFrameError('A @with block must have an expression as its first statement.');
           }
           const {node} = objPath;
           objPath.remove();
@@ -174,8 +159,7 @@ export default function ({template, traverse, types: t}) {
       WithStatement: {
         exit(path, {
           opts: {
-            exclude = [],
-            builtin = false
+            exclude = []
           }
         }) {
           path.ensureBlock();
@@ -183,6 +167,8 @@ export default function ({template, traverse, types: t}) {
           const {node, scope} = path;
           const obj = path.get('object');
           const srcBody = path.get('body');
+
+          exclude = exclude.concat(checkComment());
 
           // No body
           if (!srcBody || !srcBody.node.body.length) {
@@ -195,15 +181,17 @@ export default function ({template, traverse, types: t}) {
           }
 
           let state = {
-            globals: {}
+            globals: {},
+            rootPath: srcBody
           };
 
           srcBody.traverse(globalsVisitor, state);
 
-          exclude = exclude.concat(Object.keys(getGlobals(obj, builtin)), ['undefined']);
-          const vars = Object.keys(state.globals).filter(function (v) {
-            return exclude.indexOf(v) === -1;
-          });
+          exclude = new Set([
+            ...exclude,
+            ...traverse.Scope.contextVariables
+          ]);
+          const vars = Object.keys(state.globals).filter(v => !exclude.has(v));
 
           // No globals -> no processing needed
           if (!vars.length) {
@@ -220,7 +208,7 @@ export default function ({template, traverse, types: t}) {
             hasBreakContinue: false,
             ignoreLabeless: false,
             inSwitchCase: false,
-            innerLabels: [],
+            innerLabels: new Set(),
             hasReturn: false,
             // Map of breaks and continues. Key is the returned value, value is
             // the node corresponding to the break/continue.
@@ -262,7 +250,41 @@ export default function ({template, traverse, types: t}) {
           if (state.hasReturn || state.hasBreakContinue) {
             // If necessary, make sure returns, breaks, and continues are
             // handled.
+            buildHas();
+          } else {
+            // No returns, breaks, or continues. Just push the call itself.
+            body.push(t.expressionStatement(call));
+          }
 
+          path.replaceWithMultiple(body);
+
+          function checkComment() {
+            if (node.leadingComments && node.leadingComments.length) {
+              const comment = node.leadingComments.pop();
+              const matches = annotationRegex.exec(comment.value.trim());
+
+              if (!matches) {
+                node.leadingComments.push(comment);
+                return [];
+              }
+
+              // Get rid of the comment completely by removing the trailing
+              // comment of the previous node, if it exists.
+              let prev = path.getSibling(path.key - 1);
+              if (prev.node && prev.node.trailingComments &&
+                  prev.node.trailingComments[0] === comment) {
+                prev.node.trailingComments.pop();
+              }
+
+              if (!matches[1]) {
+                return [];
+              }
+
+              return matches[1].split(',').map(v => v.trim()).filter(v => v);
+            }
+          }
+
+          function buildHas() {
             // Store returned value in a _ret variable.
             const ret = scope.generateUidIdentifier('ret');
             body.push(t.variableDeclaration('var', [
@@ -308,12 +330,7 @@ export default function ({template, traverse, types: t}) {
                 body.push(retCheck);
               }
             }
-          } else {
-            // No returns, breaks, or continues. Just push the call itself.
-            body.push(t.expressionStatement(call));
           }
-
-          path.replaceWithMultiple(body);
         }
       }
     }

@@ -14,6 +14,7 @@ outer:
 for (var i = 0; i < 5; i++) {
   var j = 0;
   do {
+    // @with exclude: i, j
     with (obj) {
       console.log(i, j);
       if (override(i)) {
