@@ -1,7 +1,7 @@
-var _local = {};
+var _ref = {};
 
-var _local2 = obj || {};
+var _ref2 = obj || {};
 
 (function (console, a) {
   console.log(a);
-})("console" in _local2 ? _local2.console : typeof console !== "undefined" ? console : undefined, "a" in _local2 ? _local2.a : typeof a !== "undefined" ? a : undefined);
+})("console" in _ref2 ? _ref2.console : typeof console !== "undefined" ? console : undefined, "a" in _ref2 ? _ref2.a : typeof a !== "undefined" ? a : undefined);

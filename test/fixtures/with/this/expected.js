@@ -2,10 +2,10 @@ var _this = this;
 
 before;
 
-var _local = obj || {};
+var _ref = obj || {};
 
 (function (global) {
   _this.func(global);
-})("global" in _local ? _local.global : typeof global !== "undefined" ? global : undefined);
+})("global" in _ref ? _ref.global : typeof global !== "undefined" ? global : undefined);
 
 after;

@@ -1,7 +1,7 @@
 export default function ({template, traverse, types: t}) {
   const buildParamDef = template(`
-    STRING in LOCAL ?
-      LOCAL.NAME :
+    STRING in REF ?
+      REF.NAME :
       typeof NAME !== "undefined" ?
         NAME :
         undefined
@@ -233,13 +233,13 @@ export default function ({template, traverse, types: t}) {
 
           const body = [];
 
-          // Determine if the local variable can be used directly, or if
+          // Determine if the ref variable can be used directly, or if
           // a temporary variable has to be used
-          let local = obj.node;
-          if (!t.isIdentifier(local)) {
-            local = scope.generateUidIdentifier('local');
+          let ref = obj.node;
+          if (!t.isIdentifier(ref)) {
+            ref = scope.generateUidIdentifier('ref');
             body.push(t.variableDeclaration('var', [
-              t.variableDeclarator(local, obj.node)
+              t.variableDeclarator(ref, obj.node)
             ]));
           }
 
@@ -255,7 +255,7 @@ export default function ({template, traverse, types: t}) {
             return buildParamDef({
               STRING: t.stringLiteral(v),
               NAME: t.identifier(v),
-              LOCAL: local
+              REF: ref
             }).expression;
           }));
 
