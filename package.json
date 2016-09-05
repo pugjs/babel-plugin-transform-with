@@ -1,5 +1,5 @@
 {
-  "name": "babel-plugin-with",
+  "name": "babel-plugin-transform-with",
   "version": "0.0.0",
   "description": "Convert \"with\" statements to strict mode-compatible JavaScript",
   "main": "lib/index.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pugjs/babel-plugin-with.git"
+    "url": "git+https://github.com/pugjs/babel-plugin-transform-with.git"
   },
   "keywords": [
     "babel",
@@ -21,9 +21,9 @@
   "author": "Timothy Gu <timothygu99@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pugjs/babel-plugin-with/issues"
+    "url": "https://github.com/pugjs/babel-plugin-transform-with/issues"
   },
-  "homepage": "https://github.com/pugjs/babel-plugin-with#readme",
+  "homepage": "https://github.com/pugjs/babel-plugin-transform-with#readme",
   "dependencies": {
     "babel-runtime": "^6.11.6"
   },
