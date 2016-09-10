@@ -7,7 +7,7 @@ Babel plugin that turns `with` statements into strict-mode JS.
 - [x] Supports [`this` references][this]
 - [x] Supports [nesting]
 - [x] Supports [`return`], [`break`], [`continue`]
-- [ ] Supports `yield`, `await` (support is planned)
+- [x] Supports [`yield`], [`await`]
 - [ ] Supports `arguments` (unlikely to be supported)
 
 [this]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/this
@@ -15,6 +15,8 @@ Babel plugin that turns `with` statements into strict-mode JS.
 [`return`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/return
 [`break`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/loop-outside-single
 [`continue`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/loop-outside-multiple
+[`yield`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/generator-function
+[`await`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/async-function
 
 ## Alternative syntax
 

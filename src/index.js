@@ -129,6 +129,7 @@ export default function ({template, traverse, types: t}) {
   };
 
   return {
+    manipulateOptions: (_, parserOpts) => parserOpts.sourceType = 'script',
     visitor: {
       BlockStatement(path) {
         const {node} = path;
@@ -250,6 +251,16 @@ export default function ({template, traverse, types: t}) {
               REF: ref
             }).expression;
           }));
+
+          if (traverse.hasType(fn.body, scope, 'YieldExpression', t.FUNCTION_TYPES)) {
+            fn.generator = true;
+            call = t.yieldExpression(call, true);
+          }
+
+          if (traverse.hasType(fn.body, scope, 'AwaitExpression', t.FUNCTION_TYPES)) {
+            fn.async = true;
+            call = t.awaitExpression(call);
+          }
 
           if (contState.hasReturn || contState.hasBreakContinue) {
             // If necessary, make sure returns, breaks, and continues are
