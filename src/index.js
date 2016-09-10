@@ -47,11 +47,11 @@ export default function ({template, traverse, types: t}) {
     }
   }
 
-  const withBodyVisitor = {
+  const continuationVisitor = {
     Loop(path, state) {
       let oldIgnoreLabeless = state.ignoreLabeless;
       state.ignoreLabeless = true;
-      path.traverse(withBodyVisitor, state);
+      path.traverse(continuationVisitor, state);
       state.ignoreLabeless = oldIgnoreLabeless;
       path.skip();
     },
@@ -63,7 +63,7 @@ export default function ({template, traverse, types: t}) {
     SwitchCase(path, state) {
       let oldInSwitchCase = state.inSwitchCase;
       state.inSwitchCase = true;
-      path.traverse(withBodyVisitor, state);
+      path.traverse(continuationVisitor, state);
       state.inSwitchCase = oldInSwitchCase;
       path.skip();
     },
@@ -180,18 +180,20 @@ export default function ({template, traverse, types: t}) {
             return;
           }
 
-          let state = {
+          // Get globals
+          const globalsState = {
             globals: {},
             rootPath: srcBody
           };
 
-          srcBody.traverse(globalsVisitor, state);
+          srcBody.traverse(globalsVisitor, globalsState);
 
+          // Handle excludes
           exclude = new Set([
             ...exclude,
             ...traverse.Scope.contextVariables
           ]);
-          const vars = Object.keys(state.globals).filter(v => !exclude.has(v));
+          const vars = Object.keys(globalsState.globals).filter(v => !exclude.has(v));
 
           // No globals -> no processing needed
           if (!vars.length) {
@@ -204,7 +206,8 @@ export default function ({template, traverse, types: t}) {
             return;
           }
 
-          state = {
+          // Look for continuation
+          const contState = {
             hasBreakContinue: false,
             ignoreLabeless: false,
             inSwitchCase: false,
@@ -216,9 +219,10 @@ export default function ({template, traverse, types: t}) {
             LOOP_IGNORE: Symbol()
           };
 
-          srcBody.traverse(loopLabelVisitor, state);
-          srcBody.traverse(withBodyVisitor, state);
+          srcBody.traverse(loopLabelVisitor, contState);
+          srcBody.traverse(continuationVisitor, contState);
 
+          // Code generation
           const body = [];
 
           // Determine if the ref variable can be used directly, or if
@@ -232,14 +236,14 @@ export default function ({template, traverse, types: t}) {
           }
 
           // Build the main function
-          const fn = t.functionExpression(null, vars.map(function (v) {
+          let fn = t.functionExpression(null, vars.map(function (v) {
             return t.identifier(v);
           }), srcBody.node);
           // Inherits the `this` from the parent scope
           fn.shadow = true;
 
           // Build the main function call
-          const call = t.callExpression(fn, vars.map(function (v) {
+          let call = t.callExpression(fn, vars.map(function (v) {
             return buildParamDef({
               STRING: t.stringLiteral(v),
               NAME: t.identifier(v),
@@ -247,10 +251,10 @@ export default function ({template, traverse, types: t}) {
             }).expression;
           }));
 
-          if (state.hasReturn || state.hasBreakContinue) {
+          if (contState.hasReturn || contState.hasBreakContinue) {
             // If necessary, make sure returns, breaks, and continues are
             // handled.
-            buildHas();
+            buildContinuation();
           } else {
             // No returns, breaks, or continues. Just push the call itself.
             body.push(t.expressionStatement(call));
@@ -284,7 +288,7 @@ export default function ({template, traverse, types: t}) {
             }
           }
 
-          function buildHas() {
+          function buildContinuation() {
             // Store returned value in a _ret variable.
             const ret = scope.generateUidIdentifier('ret');
             body.push(t.variableDeclaration('var', [
@@ -306,12 +310,12 @@ export default function ({template, traverse, types: t}) {
               RETURN: ret
             });
 
-            if (state.hasBreakContinue) {
-              for (let key in state.map) {
-                cases.push(t.switchCase(t.stringLiteral(key), [state.map[key]]));
+            if (contState.hasBreakContinue) {
+              for (let key in contState.map) {
+                cases.push(t.switchCase(t.stringLiteral(key), [contState.map[key]]));
               }
 
-              if (state.hasReturn) {
+              if (contState.hasReturn) {
                 cases.push(t.switchCase(null, [retCheck]));
               }
 
@@ -326,7 +330,7 @@ export default function ({template, traverse, types: t}) {
                 body.push(t.switchStatement(ret, cases));
               }
             } else {
-              if (state.hasReturn) {
+              if (contState.hasReturn) {
                 body.push(retCheck);
               }
             }
