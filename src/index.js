@@ -161,7 +161,7 @@ export default function ({template, traverse, types: t}) {
         exit(path, {
           opts: {
             exclude = []
-          }
+          } = {}
         }) {
           path.ensureBlock();
 
