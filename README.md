@@ -10,6 +10,10 @@ Babel plugin that turns `with` statements into strict-mode JS.
 - [x] Supports [`yield`], [`await`]
 - [ ] Supports `arguments` (unlikely to be supported)
 
+[![Build Status](https://img.shields.io/travis/pugjs/babel-plugin-transform-with/master.svg)](https://travis-ci.org/pugjs/babel-plugin-transform-with)
+[![Dependency Status](https://img.shields.io/david/pugjs/babel-plugin-transform-with.svg)](https://david-dm.org/pugjs/babel-plugin-transform-with)
+[![NPM version](https://img.shields.io/npm/v/babel-plugin-transform-with.svg)](https://www.npmjs.org/package/babel-plugin-transform-with)
+
 [this]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/this
 [nesting]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/nested
 [`return`]: https://github.com/pugjs/babel-plugin-transform-with/tree/master/test/fixtures/with/return
