@@ -130,7 +130,13 @@ export default function ({template, traverse, types: t}) {
 
   return {
     visitor: {
-      BlockStatement(path) {
+      BlockStatement(path, {
+        opts: {
+          alternative = true
+        } = {}
+      }) {
+        if (!alternative) return;
+
         const {node} = path;
         if (checkComment()) {
           const obj = getExpression();

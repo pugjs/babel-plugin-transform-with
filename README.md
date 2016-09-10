@@ -40,6 +40,8 @@ with (obj || {}) {
 }
 ```
 
+This feature is enabled by default, but you could set `alternative` option to `false` to disable it.
+
 ## Example output
 
 ```js
