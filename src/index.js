@@ -129,7 +129,6 @@ export default function ({template, traverse, types: t}) {
   };
 
   return {
-    manipulateOptions: (_, parserOpts) => parserOpts.sourceType = 'script',
     visitor: {
       BlockStatement(path) {
         const {node} = path;
