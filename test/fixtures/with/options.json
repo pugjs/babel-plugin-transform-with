@@ -1,9 +1,9 @@
 {
   "plugins": [
-    "with",
-    ["parser-opts", {
-      "allowReturnOutsideFunction" : true
-    }]
+    "with"
   ],
-  "sourceType": "script"
+  "sourceType": "script",
+  "parserOpts": {
+    "allowReturnOutsideFunction": true
+  }
 }

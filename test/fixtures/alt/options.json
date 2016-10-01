@@ -1,8 +1,8 @@
 {
   "plugins": [
-    "with",
-    ["parser-opts", {
-      "allowReturnOutsideFunction" : true
-    }]
-  ]
+    "with"
+  ],
+  "parserOpts": {
+    "allowReturnOutsideFunction": true
+  }
 }
